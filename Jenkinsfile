@@ -1,20 +1,31 @@
 pipeline {
     agent any
+
+    tools {
+        maven 'maven-3.9'
+    }
+
     stages {
 
-        stage("test") {
+        stage("build-jar") {
             steps {
                 script {
-                    echo "testing the application..."
+                    echo "building the application..."
+                    sh 'mvn package'
                                         
                 }
             }
         }
 
-       stage("build") {
+       stage("build image") {
             steps {
                 script {
-                    echo "building the application..."
+                    echo "building the docker image..."
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                        sh 'docker build -t psegynola/philmay:4.0 .'
+                        sh 'echo $PASS | docker login -u ${USER} --password-stdin'
+                        sh 'docker push psegynola/philmay:4.0'
+                    }
                 }
             }
         } 
